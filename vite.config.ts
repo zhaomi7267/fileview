@@ -234,13 +234,13 @@ export default defineConfig(({ command }) => ({
     open: true,
     proxy: {
       '/preview/api': {
-        target: 'http://localhost:8184',
+        target: 'http://119.45.133.101:9898',
         // changeOrigin: true,
         // 示例：/preview/api → /preview
         // rewrite: path => path.replace(/^\/preview\/api/, '/preview'),
       },
       '^/.+/preview/api': {
-        target: 'http://localhost:8184',
+        target: 'http://119.45.133.101:9898',
         // changeOrigin: true,
         // 示例：/abc/preview/api → /preview
         rewrite: (path) =>

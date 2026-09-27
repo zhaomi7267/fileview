@@ -15,27 +15,31 @@
  */
 
 import { renderProps } from '@/types';
-import styles from './index.module.scss';
-import { APP_NAME_EN, APP_HOME } from '@/constant/vars';
+// 隐藏底部品牌栏，以下导入暂时不需要
+// import styles from './index.module.scss';
+// import { APP_NAME_EN, APP_HOME } from '@/constant/vars';
 
 // eslint-disable-next-line no-unused-vars
 const Footer = (_props: renderProps) => {
-  return (
-    <div className={styles.footer}>
-      文件预览由
-      <a
-        style={{
-          padding: '0 5px',
-        }}
-        href={`${APP_HOME}`}
-        target='_blank'
-        rel='noreferrer'
-      >
-        {APP_NAME_EN}
-      </a>
-      驱动
-    </div>
-  );
+  // 隐藏整个底部品牌栏
+  return null;
+
+  // return (
+  //   <div className={styles.footer}>
+  //     文件预览由
+  //     <a
+  //       style={{
+  //         padding: '0 5px',
+  //       }}
+  //       href={`${APP_HOME}`}
+  //       target='_blank'
+  //       rel='noreferrer'
+  //     >
+  //       {APP_NAME_EN}
+  //     </a>
+  //     驱动
+  //   </div>
+  // );
 };
 
 export default Footer;

@@ -32,7 +32,7 @@ import {
   APP_REPOSITORY,
   APP_DOCS,
 } from '@/constant/vars';
-import logo from '../../../public/logo.png?inline';
+// import logo from '../../../public/logo.png?inline'; // 隐藏 logo
 import { Base64 } from 'js-base64';
 
 const { Title, Paragraph, Link } = Typography;
@@ -48,7 +48,7 @@ export default function Welcome() {
     <div className='welcome-page'>
       <Card className='welcome-card'>
         <div className='welcome-header'>
-          <img src={logo} className='success-icon' />
+          {/* <img src={logo} className='success-icon' /> 隐藏 logo */}
           <Title level={2}>{APP_NAME_ZH}</Title>
           <Paragraph type='secondary'>COMMUNITY EDITION</Paragraph>
         </div>

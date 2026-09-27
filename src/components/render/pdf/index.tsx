@@ -80,7 +80,11 @@ const PdfViewer = (props: renderProps) => {
   const [pdfDoc, setPdfDoc] = useState<any | null>(null);
   // 初始缩放比例设为 1.0，后续根据 PDF 实际宽度调整
   const [scale, setScale] = useState<number>(1.0);
-  ntPage, setCurrentPage] = useState<number>(1);
+  // 当前缩放模式：'auto' | 'page-fit' | 'width-fit' | 百分比值 | 'custom'
+  const [scaleMode, setScaleMode] = useState<string>('width-fit');
+  const initialScaleSet = useRef<boolean>(false); // 标记是否已设置初始缩放
+  const [pages, setPages] = useState<PageInfo[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [sidebarVisible, setSidebarVisible] = useState<boolean>(false); // 默认隐藏侧边栏
   const observerRef = useRef<IntersectionObserver | null>(null);
   const renderingRef = useRef<Set<number>>(new Set());
@@ -223,23 +227,16 @@ const PdfViewer = (props: renderProps) => {
         setPages(pageInfos);
         pagesRef.current = pageInfos; // 同步更新 ref
 
-        // 根据第一页的宽度和容器宽度计算合适的缩放比例
+        // 根据第一页的宽度和容器宽度计算合适的缩放比例（适合宽度）
         if (!initialScaleSet.current && pageInfos.length > 0) {
           const containerWidth =
             containerRef.current?.clientWidth || window.innerWidth;
           const firstPageWidth = pageInfos[0].viewport.width;
-          // 计算适合容器宽度的缩放比例，留出一些边距（-20px）
-          const fitScale = (containerWidth - 20) / firstPageWidth;
+          // 计算适合容器宽度的缩放比例，留出一些边距（-40px）
+          const fitScale = (containerWidth - 40) / firstPageWidth;
 
-          // 单页模式：最大 150%，但不能超出屏幕
-          // 移动端：限制在 0.5-2.0 范围
-          let initialScale;
-          if (isPhone) {
-            initialScale = Math.max(0.5, Math.min(fitScale, 2.0));
-          } else {
-            // PC 端单页：取 fitScale 和 1.5 中的较小值，确保不超出
-            initialScale = Math.max(0.5, Math.min(fitScale, 1.5));
-          }
+          // 适合宽度：直接使用计算出的缩放比例，范围 0.5-5
+          const initialScale = Math.max(0.5, Math.min(fitScale, 5));
 
           setScale(initialScale);
           scaleRef.current = initialScale;
@@ -737,6 +734,7 @@ const PdfViewer = (props: renderProps) => {
           }
 
           setScale(resetScale);
+          setScaleMode('custom');
 
           // 恢复滚动位置
           if (scrollContainer) {
@@ -859,6 +857,7 @@ const PdfViewer = (props: renderProps) => {
         const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5);
 
         setScale(newScale);
+        setScaleMode('custom');
 
         // 立即调整滚动位置，使用单次 RAF 减少延迟
         requestAnimationFrame(() => {
@@ -1001,6 +1000,7 @@ const PdfViewer = (props: renderProps) => {
       }
 
       setScale(newScale);
+      setScaleMode('width-fit');
       log.debug(`模式切换为 ${realDisplayMode}，应用缩放比例: ${newScale}`);
     },
     [calculateFitScale, scale, pages, displayMode],
@@ -1009,6 +1009,7 @@ const PdfViewer = (props: renderProps) => {
   // 处理缩放选择
   const handleScaleChange = useCallback(
     (value: string) => {
+      setScaleMode(value);
       if (value === 'auto') {
         // 自动缩放：根据模式和屏幕分辨率计算
         const currentIsMobile = isPhone;
@@ -1639,6 +1640,7 @@ const PdfViewer = (props: renderProps) => {
 
                           const newScale = Math.max(scale / 1.2, 0.5);
                           setScale(newScale);
+                          setScaleMode('custom');
 
                           requestAnimationFrame(() => {
                             const scrollWidth = scrollContainer.scrollWidth;
@@ -1665,7 +1667,11 @@ const PdfViewer = (props: renderProps) => {
                       style={{ cursor: 'pointer' }}
                     />
                     <Select
-                      value={`${Math.round(scale * 100)}%`}
+                      value={
+                        scaleMode === 'custom'
+                          ? `${Math.round(scale * 100)}%`
+                          : scaleMode
+                      }
                       onChange={handleScaleChange}
                       style={{ width: 76 }}
                       dropdownMatchSelectWidth={false}
@@ -1701,6 +1707,7 @@ const PdfViewer = (props: renderProps) => {
 
                           const newScale = Math.min(scale * 1.2, 5);
                           setScale(newScale);
+                          setScaleMode('custom');
 
                           requestAnimationFrame(() => {
                             const scrollWidth = scrollContainer.scrollWidth;
