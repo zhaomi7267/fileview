@@ -16,61 +16,39 @@
 
 // 是否是手机
 const isPhoneFun = (): boolean => {
-  // 优先使用 CSS 像素（逻辑分辨率）
-  const width =
-    window.innerWidth || document.documentElement.clientWidth || screen.width;
-  const height =
-    window.innerHeight ||
-    document.documentElement.clientHeight ||
-    screen.height;
-  const minSide = Math.min(width, height);
+  // 强制使用 PC 端样式，移动端不做特殊处理
+  // 原始判断逻辑保留在下方注释中，需要恢复时取消注释
+  return false;
 
-  // 手机逻辑宽度通常 < 768px
-  if (minSide >= 768) return false;
+  // // 优先使用 CSS 像素（逻辑分辨率）
+  // const width =
+  //   window.innerWidth || document.documentElement.clientWidth || screen.width;
+  // const height =
+  //   window.innerHeight ||
+  //   document.documentElement.clientHeight ||
+  //   screen.height;
+  // const minSide = Math.min(width, height);
 
-  // 触摸点判断（保留）
-  if (navigator.maxTouchPoints <= 0) return false;
+  // // 手机逻辑宽度通常 < 768px
+  // if (minSide >= 768) return false;
 
-  // 排除桌面设备（更精确）
-  const ua = navigator.userAgent.toLowerCase();
-  const isDesktop =
-    /windows|macintosh|linux/.test(ua) &&
-    !/mobile|android|iphone|ipad/.test(ua);
-  if (isDesktop) return false;
+  // // 触摸点判断（保留）
+  // if (navigator.maxTouchPoints <= 0) return false;
 
-  return true;
+  // // 排除桌面设备（更精确）
+  // const ua = navigator.userAgent.toLowerCase();
+  // const isDesktop =
+  //   /windows|macintosh|linux/.test(ua) &&
+  //   !/mobile|android|iphone|ipad/.test(ua);
+  // if (isDesktop) return false;
+
+  // return true;
 };
 
 // 是否是 Pad（iPad + Android Pad + Huawei MatePad）
 const isPadFun = (): boolean => {
-  if (isPhoneFun()) return false;
-
-  const ua = navigator.userAgent || '';
-
-  // 1️⃣ iPad UA（老 iPad / 早期 iPadOS）
-  if (/iPad/.test(ua)) return true;
-
-  // 2️⃣ iPadOS 13+ 在桌面模式会变成 Mac UA
-  //    只要 Mac 且支持多点触控，就算 iPad
-  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints >= 1) {
-    return true;
-  }
-
-  // 3️⃣ 其他 Android Pad / MatePad
-  if (navigator.maxTouchPoints <= 1) return false;
-
-  const isCoarsePointer =
-    window.matchMedia?.('(pointer: coarse)').matches ?? false;
-
-  if (isCoarsePointer) return true;
-
-  // 4️⃣ 尺寸兜底
-  const minSide = Math.min(
-    window.visualViewport?.width ?? window.innerWidth,
-    window.visualViewport?.height ?? window.innerHeight,
-  );
-
-  return minSide >= 600;
+  // 强制使用 PC 端样式，Pad 不做特殊处理
+  return false;
 };
 
 // 是否支持触摸

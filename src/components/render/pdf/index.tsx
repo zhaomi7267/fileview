@@ -236,7 +236,7 @@ const PdfViewer = (props: renderProps) => {
           const fitScale = (containerWidth - 40) / firstPageWidth;
 
           // 适合宽度：直接使用计算出的缩放比例，范围 0.5-5
-          const initialScale = Math.max(0.5, Math.min(fitScale, 5));
+          const initialScale = Math.max(0.25, Math.min(fitScale, 5));
 
           setScale(initialScale);
           scaleRef.current = initialScale;
@@ -725,12 +725,12 @@ const PdfViewer = (props: renderProps) => {
           let resetScale;
           if (currentIsMobile) {
             // 移动端：重置为适配缩放
-            resetScale = Math.max(0.5, Math.min(fitScale, 2.0));
+            resetScale = Math.max(0.25, Math.min(fitScale, 2.0));
           } else {
             // PC 端：单页最大 150%，双页最大 100%
             const maxScale =
               displayMode === IDisplayMode.DoublePage ? 1.0 : 1.5;
-            resetScale = Math.max(0.5, Math.min(fitScale, maxScale));
+            resetScale = Math.max(0.25, Math.min(fitScale, maxScale));
           }
 
           setScale(resetScale);
@@ -802,7 +802,7 @@ const PdfViewer = (props: renderProps) => {
               ? (oldScrollTop + oldClientHeight / 2) / oldScrollHeight
               : 0.5;
 
-          const newScale = Math.max(scale / 1.2, 0.5);
+          const newScale = Math.max(scale / 1.2, 0.25);
           setScale(newScale);
 
           requestAnimationFrame(() => {
@@ -821,7 +821,7 @@ const PdfViewer = (props: renderProps) => {
             );
           });
         } else {
-          setScale(Math.max(scale / 1.2, 0.5));
+          setScale(Math.max(scale / 1.2, 0.25));
         }
       }
     };
@@ -854,7 +854,7 @@ const PdfViewer = (props: renderProps) => {
             : 0.5;
 
         const scaleFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-        const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5);
+        const newScale = Math.min(Math.max(scale * scaleFactor, 0.25), 5);
 
         setScale(newScale);
         setScaleMode('custom');
@@ -885,6 +885,89 @@ const PdfViewer = (props: renderProps) => {
     };
   }, [scale, allowZoom]);
 
+  // 处理双指捏合缩放（移动端触摸手势）
+  useEffect(() => {
+    if (!pageCanvasRef.current || !allowZoom) return;
+
+    let initialDistance = 0;
+    let gestureInitialScale = 1;
+
+    const getTouchDistance = (touches: TouchList): number => {
+      const a = touches[0];
+      const b = touches[1];
+      return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 2) {
+        initialDistance = getTouchDistance(event.touches);
+        gestureInitialScale = scaleRef.current;
+      }
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length === 2 && initialDistance > 0) {
+        // 阻止浏览器原生页面缩放，由应用内缩放接管
+        event.preventDefault();
+
+        const scrollContainer = containerRef.current;
+        if (!scrollContainer) return;
+
+        // 记录缩放前的滚动位置
+        const oldScrollTop = scrollContainer.scrollTop;
+        const oldScrollHeight = scrollContainer.scrollHeight;
+        const oldClientHeight = scrollContainer.clientHeight;
+        const scrollRatio =
+          oldScrollHeight > oldClientHeight
+            ? (oldScrollTop + oldClientHeight / 2) / oldScrollHeight
+            : 0.5;
+
+        // 根据两指距离变化计算缩放比例
+        const currentDistance = getTouchDistance(event.touches);
+        const ratio = currentDistance / initialDistance;
+        const newScale = Math.min(
+          Math.max(gestureInitialScale * ratio, 0.25),
+          5,
+        );
+
+        setScale(newScale);
+        setScaleMode('custom');
+        scaleRef.current = newScale;
+
+        // 调整滚动位置（与滚轮缩放保持一致：水平居中 + 垂直按比例）
+        requestAnimationFrame(() => {
+          const scrollWidth = scrollContainer.scrollWidth;
+          const clientWidth = scrollContainer.clientWidth;
+          const centerScrollLeft = (scrollWidth - clientWidth) / 2;
+          scrollContainer.scrollLeft = Math.max(0, centerScrollLeft);
+
+          const newScrollHeight = scrollContainer.scrollHeight;
+          const newClientHeight = scrollContainer.clientHeight;
+          const newScrollTop =
+            newScrollHeight * scrollRatio - newClientHeight / 2;
+          scrollContainer.scrollTop = Math.max(0, newScrollTop);
+        });
+      }
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length < 2) {
+        initialDistance = 0;
+      }
+    };
+
+    const canvas = pageCanvasRef.current;
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [allowZoom]);
+
   // 监听屏幕方向变化，使用防抖优化性能
   useEffect(() => {
     let resizeTimer: ReturnType<typeof setTimeout>;
@@ -904,7 +987,7 @@ const PdfViewer = (props: renderProps) => {
           const fitScale = (containerW - 40) / baseWidth;
 
           // 移动端：限制在 0.5-2.0 范围
-          const newScale = Math.max(0.5, Math.min(fitScale, 2.0));
+          const newScale = Math.max(0.25, Math.min(fitScale, 2.0));
           setScale(newScale);
           log.debug(`屏幕旋转，自动调整缩放比: ${newScale}`);
         }
@@ -944,14 +1027,14 @@ const PdfViewer = (props: renderProps) => {
 
       if (fitType === 'width') {
         // 适合宽度：直接使用计算出的缩放比例
-        return Math.max(0.5, Math.min(fitScale, 5));
+        return Math.max(0.25, Math.min(fitScale, 5));
       } else {
         // 适合页面：考虑高度，取较小值
         const containerH =
           containerRef.current?.clientHeight || window.innerHeight;
         const pageHeight = pages[0].viewport.height;
         const fitHeightScale = (containerH - 60) / pageHeight;
-        return Math.max(0.5, Math.min(Math.min(fitScale, fitHeightScale), 5));
+        return Math.max(0.25, Math.min(Math.min(fitScale, fitHeightScale), 5));
       }
     },
     [pages, displayMode],
@@ -993,10 +1076,10 @@ const PdfViewer = (props: renderProps) => {
 
       if (realDisplayMode === IDisplayMode.DoublePage) {
         // 双页模式：最大 100%，取 fitScale 和 1.0 中的较小值，确保不超出
-        newScale = Math.max(0.5, Math.min(fitScale, 1.0));
+        newScale = Math.max(0.25, Math.min(fitScale, 1.0));
       } else {
         // 单页模式：最大 150%，取 fitScale 和 1.5 中的较小值，确保不超出
-        newScale = Math.max(0.5, Math.min(fitScale, 1.5));
+        newScale = Math.max(0.25, Math.min(fitScale, 1.5));
       }
 
       setScale(newScale);
@@ -1024,12 +1107,12 @@ const PdfViewer = (props: renderProps) => {
           const fitScale = (containerW - 40) / baseWidth;
 
           if (currentIsMobile) {
-            setScale(Math.max(0.5, Math.min(fitScale, 2.0)));
+            setScale(Math.max(0.25, Math.min(fitScale, 2.0)));
           } else {
             // 单页最大 150%，双页最大 100%
             const maxScale =
               displayMode === IDisplayMode.DoublePage ? 1.0 : 1.5;
-            setScale(Math.max(0.5, Math.min(fitScale, maxScale)));
+            setScale(Math.max(0.25, Math.min(fitScale, maxScale)));
           }
         }
       } else if (value === 'page-fit') {
@@ -1638,7 +1721,7 @@ const PdfViewer = (props: renderProps) => {
                                 oldScrollHeight
                               : 0.5;
 
-                          const newScale = Math.max(scale / 1.2, 0.5);
+                          const newScale = Math.max(scale / 1.2, 0.25);
                           setScale(newScale);
                           setScaleMode('custom');
 
@@ -1661,7 +1744,7 @@ const PdfViewer = (props: renderProps) => {
                             );
                           });
                         } else {
-                          setScale(Math.max(scale / 1.2, 0.5));
+                          setScale(Math.max(scale / 1.2, 0.25));
                         }
                       }}
                       style={{ cursor: 'pointer' }}
@@ -1681,6 +1764,7 @@ const PdfViewer = (props: renderProps) => {
                         { label: '自动缩放', value: 'auto' },
                         { label: '适合页面', value: 'page-fit' },
                         { label: '适合宽度', value: 'width-fit' },
+                        { label: '25%', value: '0.25' },
                         { label: '50%', value: '0.5' },
                         { label: '75%', value: '0.75' },
                         { label: '100%', value: '1' },
