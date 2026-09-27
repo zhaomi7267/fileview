@@ -1,4 +1,5 @@
 // 全局样式
+html,
 body {
   margin: 0;
   font-family:
@@ -9,6 +10,18 @@ body {
   height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+  // 全局禁止浏览器原生捏合缩放，由应用内手势接管
+  touch-action: pan-x pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+// 允许输入框等可编辑元素选中文字
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 #root {

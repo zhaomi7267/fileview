@@ -10,7 +10,8 @@
   position: relative;
   padding: 0 2px;
   box-sizing: border-box;
-  touch-action: auto;
+  // 允许垂直/水平滚动，但阻止浏览器原生捏合缩放，由应用内手势接管
+  touch-action: pan-x pan-y;
   overflow: hidden;
 
   // 顶部工具条

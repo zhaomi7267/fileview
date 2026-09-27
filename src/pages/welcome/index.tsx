@@ -15,34 +15,15 @@
  */
 
 import { useEffect } from 'react';
-import {
-  // CheckCircleOutlined,
-  GithubOutlined,
-  FileTextOutlined,
-  ExperimentOutlined,
-} from '@ant-design/icons';
-import { Card, Button, Space, Typography } from 'antd';
+import { Card, Typography } from 'antd';
 import './index.scss';
-import { getAppContext } from '@/utils';
-const appContext = getAppContext();
-import { version } from '../../../package.json';
-import {
-  APP_NAME_ZH,
-  APP_HOME,
-  APP_REPOSITORY,
-  APP_DOCS,
-} from '@/constant/vars';
+import { APP_NAME_ZH } from '@/constant/vars';
 // import logo from '../../../public/logo.png?inline'; // 隐藏 logo
-import { Base64 } from 'js-base64';
 
-const { Title, Paragraph, Link } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function Welcome() {
   useEffect(() => {}, []);
-
-  const handleLinkClick = (url: string) => {
-    window.open(url, '_blank');
-  };
 
   return (
     <div className='welcome-page'>
